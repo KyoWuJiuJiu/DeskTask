@@ -1,0 +1,45 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # macos-14 runner 是 arm64，正好和默认的 -target arm64-apple-macos14.0 对上
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          swiftc --version
+          sw_vers
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Verify the bundle
+        run: |
+          set -euo pipefail
+          test -x build/DeskTask.app/Contents/MacOS/DeskTask
+          test -f build/DeskTask.app/Contents/Resources/AppIcon.icns
+          plutil -lint build/DeskTask.app/Contents/Info.plist
+          codesign -dv build/DeskTask.app 2>&1 | grep -E 'Identifier|Signature'
+
+      # 离屏渲染会把每个界面状态都画一遍，能顺带抓出布局/绘制里的崩溃。
+      # CI 环境没有窗口服务器时可能起不来，所以不阻断构建。
+      - name: Render every UI state offscreen (smoke test)
+        continue-on-error: true
+        run: ./tools/render.sh
+
+      - name: Package artifact
+        run: ./tools/package.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DeskTask-app
+          path: build/DeskTask-*.zip
+          if-no-files-found: warn

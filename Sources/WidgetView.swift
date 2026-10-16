@@ -20,7 +20,7 @@ final class HeaderView: NSView {
             .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
             .foregroundColor: NSColor.secondaryLabelColor,
         ]
-        NSAttributedString(string: "DeskReminder", attributes: attributes)
+        NSAttributedString(string: "DeskTask", attributes: attributes)
             .draw(at: NSPoint(x: 17, y: 1))
     }
 
@@ -451,7 +451,7 @@ final class WidgetView: NSView {
         let menu = NSMenu()
         menu.addItem(withTitle: "清除全部提醒", action: #selector(clearAll), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "退出 DeskReminder", action: #selector(quit), keyEquivalent: "")
+        menu.addItem(withTitle: "退出 DeskTask", action: #selector(quit), keyEquivalent: "")
         for item in menu.items where item.action != nil {
             item.target = self
         }

@@ -5,19 +5,19 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>zh_CN</string>
     <key>CFBundleExecutable</key>
-    <string>DeskReminder</string>
+    <string>DeskTask</string>
     <key>CFBundleIdentifier</key>
-    <string>local.deskreminder.widget</string>
+    <string>local.desktask.widget</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>DeskReminder</string>
+    <string>DeskTask</string>
     <key>CFBundleDisplayName</key>
-    <string>DeskReminder</string>
+    <string>DeskTask</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.0.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleIconFile</key>

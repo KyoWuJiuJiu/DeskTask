@@ -4,14 +4,17 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-APP="build/DeskReminder.app"
-BIN="$APP/Contents/MacOS/DeskReminder"
+APP="build/DeskTask.app"
+BIN="$APP/Contents/MacOS/DeskTask"
 
 rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
+# 默认按本机架构编译，可用 ARCH=x86_64 ./build.sh 交叉编译
+ARCH="${ARCH:-$(uname -m)}"
+
 swiftc -O -swift-version 5 \
-  -target arm64-apple-macos14.0 \
+  -target "${ARCH}-apple-macos14.0" \
   -o "$BIN" \
   Sources/*.swift \
   -framework Cocoa

@@ -6,10 +6,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 swiftc -O -swift-version 5 -target arm64-apple-macos14.0 \
-  -o /tmp/deskreminder-mkicon tools/make-icon/main.swift -framework Cocoa
+  -o /tmp/desktask-mkicon tools/make-icon/main.swift -framework Cocoa
 
 WORK="$(mktemp -d)"
-( cd "$WORK" && /tmp/deskreminder-mkicon )
+( cd "$WORK" && /tmp/desktask-mkicon )
 cp "$WORK/AppIcon.icns" Assets/AppIcon.icns
 rm -rf "$WORK"
 

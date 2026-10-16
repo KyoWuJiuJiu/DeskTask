@@ -1,5 +1,5 @@
 #!/bin/bash
-# 把 DeskReminder 装成"正式应用"：
+# 把 DeskTask 装成"正式应用"：
 #   1. 复制到 /Applications —— 这样才会出现在启动台(Launchpad)和聚焦搜索里
 #   2. 装一个 LaunchAgent —— 开机/登录后自动启动
 #
@@ -11,9 +11,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-APP_NAME="DeskReminder"
+APP_NAME="DeskTask"
 TARGET="/Applications/${APP_NAME}.app"
-LABEL="local.deskreminder.login"
+LABEL="local.desktask.login"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 BIN="/Applications/${APP_NAME}.app/Contents/MacOS/${APP_NAME}"
 DOMAIN="gui/$(id -u)"
@@ -22,7 +22,7 @@ uninstall() {
   echo "==> 移除开机自启"
   launchctl bootout "${DOMAIN}/${LABEL}" 2>/dev/null || true
   rm -f "$PLIST"
-  ps -Ao pid=,args= | awk '$0 ~ /\/Applications\/DeskReminder\.app\/Contents\/MacOS\/DeskReminder$/ { print $1 }' \
+  ps -Ao pid=,args= | awk '$0 ~ /\/Applications\/DeskTask\.app\/Contents\/MacOS\/DeskTask$/ { print $1 }' \
     | while read -r pid; do kill "$pid" 2>/dev/null || true; done
   sleep 0.6
   echo "==> 移除 /Applications/${APP_NAME}.app"
@@ -42,7 +42,7 @@ fi
 # 结果是 bootstrap 报 "Input/output error"，登录项反而丢了。
 echo "==> 停掉旧实例与旧 job"
 launchctl bootout "${DOMAIN}/${LABEL}" 2>/dev/null || true
-ps -Ao pid=,args= | awk '$0 ~ /\/Applications\/DeskReminder\.app\/Contents\/MacOS\/DeskReminder$/ { print $1 }' \
+ps -Ao pid=,args= | awk '$0 ~ /\/Applications\/DeskTask\.app\/Contents\/MacOS\/DeskTask$/ { print $1 }' \
   | while read -r pid; do kill "$pid" 2>/dev/null || true; done
 sleep 0.8
 

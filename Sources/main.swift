@@ -250,7 +250,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = item.button {
-            let image = NSImage(systemSymbolName: "timer", accessibilityDescription: "DeskReminder")
+            let image = NSImage(systemSymbolName: "timer", accessibilityDescription: "DeskTask")
             image?.isTemplate = true
             button.image = image
             button.target = self
@@ -271,12 +271,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showStatusMenu() {
         guard let item = statusItem else { return }
         let menu = NSMenu()
-        menu.addItem(withTitle: "显示 DeskReminder", action: #selector(showWidget), keyEquivalent: "")
+        menu.addItem(withTitle: "显示 DeskTask", action: #selector(showWidget), keyEquivalent: "")
         menu.addItem(withTitle: "收进桌面", action: #selector(hideWidget), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "清除全部提醒", action: #selector(clearReminders), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "退出 DeskReminder", action: #selector(quitApp), keyEquivalent: "q")
+        menu.addItem(withTitle: "退出 DeskTask", action: #selector(quitApp), keyEquivalent: "q")
         for entry in menu.items where entry.action != nil {
             entry.target = self
         }
@@ -334,7 +334,7 @@ let appMenuItem = NSMenuItem()
 mainMenu.addItem(appMenuItem)
 let appMenu = NSMenu()
 appMenu.addItem(
-    withTitle: "退出 DeskReminder",
+    withTitle: "退出 DeskTask",
     action: #selector(NSApplication.terminate(_:)),
     keyEquivalent: "q"
 )

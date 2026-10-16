@@ -1,0 +1,9 @@
+# 构建产物
+build/
+
+# macOS
+.DS_Store
+
+# 图标生成脚本的中间产物（Assets/AppIcon.icns 是提交的成品）
+/AppIcon.icns
+/AppIcon.iconset/

@@ -94,6 +94,8 @@ print("== 5 列表 ==")
 let timerID = store.addTimer(minutes: 10)
 store.updateTitle(timerID, title: "开会")
 let taskID = store.addTask(title: "把季度报销单交给财务", dueDate: Calendar.current.date(byAdding: .day, value: 3, to: Date())!)
+// 一条已过期的任务，用来检查红色标记与横条的过期计数
+_ = store.addTask(title: "回复客户合同修改意见", dueDate: Calendar.current.date(byAdding: .day, value: -3, to: Date())!)
 store.markSynced(taskID, reminderID: "x-apple-reminder://TEST")
 widget.setPanel(.collapsed)
 shoot("5-list")

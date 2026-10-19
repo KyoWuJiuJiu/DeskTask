@@ -98,6 +98,15 @@ final class ChipView: NSView, NSTextFieldDelegate {
 
         case .task:
             let dateText = item.dueDate.map(formatDueDate) ?? "未定日期"
+            let overdue = isTaskOverdue(item)
+            titleField.textColor = overdue ? .systemRed : .labelColor
+            if overdue {
+                // 过期的任务留在清单里，但要一眼看得出来
+                detailLabel.stringValue = "任务 · \(dateText) · 已过期"
+                detailLabel.textColor = .systemRed
+                detailLabel.toolTip = "到期日已过，任务仍然保留在清单里"
+                return
+            }
             switch item.sync {
             case .pending:
                 detailLabel.stringValue = "任务 · \(dateText) · 同步中…"

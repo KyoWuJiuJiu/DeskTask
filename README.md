@@ -27,9 +27,13 @@ Click the `+` and you get two ways in, plus a row of quick timers:
 ```
 
 Task cards have **✓ = mark complete in Reminders and remove** and **✕ = remove from the desktop only**.
-Timer cards show a ring that fills as the countdown runs; when it hits zero the app plays the
-system *Glass* sound, floats the window to the front, and repeats every 30s (up to 5 times) until
-you dismiss it.
+Timer cards show a ring that fills as the countdown runs. When it hits zero the app plays the
+system *Glass* sound, floats the window to the front, and repeats every 30s (up to 5 times) —
+and then **removes the card two minutes later**, so nothing red is left lying around.
+
+**Overdue tasks stay put.** A task whose due date has passed is kept in the list, marked red as
+overdue instead of silently lingering, and the idle strip switches to reporting how many tasks are
+overdue.
 
 ## Quick start
 

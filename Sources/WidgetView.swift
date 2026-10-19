@@ -158,22 +158,22 @@ final class WidgetView: NSView {
         return minutes <= 0 ? "不到 1 分钟" : "还剩 \(minutes) 分钟"
     }
 
-    /// 今天需要完成的任务数（含已过期的）。
-    private var todayTaskText: String {
-        let calendar = Calendar.current
-        let endOfToday = calendar.startOfDay(for: Date()).addingTimeInterval(24 * 3600)
-        let count = store.items.filter { item in
-            guard item.kind == .task, let due = item.dueDate else { return false }
-            return due < endOfToday
-        }.count
-        return count == 0 ? "今日无任务" : "今日 \(count) 个任务"
+    /// 横条右侧：优先报过期数量，没有过期时才报今天到期数。
+    private var barTaskText: String {
+        let overdue = store.overdueTaskCount
+        let today = store.todayTaskCount
+        if overdue > 0 {
+            return today > 0 ? "过期 \(overdue) 个 · 今日 \(today) 个" : "过期 \(overdue) 个任务"
+        }
+        return today == 0 ? "今日无任务" : "今日 \(today) 个任务"
     }
 
     private func updateBarInfo() {
         bar.progress = nearestTimerProgress
         bar.hasTimer = hasRunningTimer
+        bar.hasOverdue = store.overdueTaskCount > 0
         bar.timerText = nearestTimerText
-        bar.taskText = todayTaskText
+        bar.taskText = barTaskText
         bar.needsDisplay = true
     }
 

@@ -373,6 +373,8 @@ final class IdleBarView: NSView {
     /// 0…1：最近一个倒计时的进度。
     var progress: Double = 0
     var hasTimer = false
+    /// 有没有已过期的任务（右侧文字标红）。
+    var hasOverdue = false
     var timerText = ""
     var taskText = ""
 
@@ -455,7 +457,11 @@ final class IdleBarView: NSView {
             text.draw(at: NSPoint(x: 13, y: (bounds.height - size.height) / 2))
         }
         if !taskText.isEmpty {
-            let text = NSAttributedString(string: taskText, attributes: attributes)
+            var taskAttributes = attributes
+            if hasOverdue {
+                taskAttributes[.foregroundColor] = NSColor.systemRed
+            }
+            let text = NSAttributedString(string: taskText, attributes: taskAttributes)
             let size = text.size()
             text.draw(at: NSPoint(
                 x: bounds.width - 13 - size.width,

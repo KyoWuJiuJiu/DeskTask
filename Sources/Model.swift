@@ -31,6 +31,8 @@ struct ReminderItem: Equatable, Identifiable {
     /// task 用（当天 00:00）
     var dueDate: Date?
     var phase: Phase
+    /// 到点的时刻。到点后只停留 `ReminderStore.firedLinger` 秒就自动离开清单。
+    var firedAt: Date?
     var sync: SyncState
 
     init(
@@ -41,6 +43,7 @@ struct ReminderItem: Equatable, Identifiable {
         deadline: Date? = nil,
         dueDate: Date? = nil,
         phase: Phase = .running,
+        firedAt: Date? = nil,
         sync: SyncState = .notApplicable
     ) {
         self.id = id
@@ -50,6 +53,7 @@ struct ReminderItem: Equatable, Identifiable {
         self.deadline = deadline
         self.dueDate = dueDate
         self.phase = phase
+        self.firedAt = firedAt
         self.sync = sync
     }
 }
@@ -83,6 +87,9 @@ final class ReminderStore {
         ticker?.invalidate()
     }
 
+    /// 到点之后在清单里停留多久；过了就自动移除，不再挂着红色条。
+    static let firedLinger: TimeInterval = 120
+
     private func tick() {
         let current = Date()
         now = current
@@ -91,8 +98,22 @@ final class ReminderStore {
         for index in items.indices where items[index].kind == .timer && items[index].phase == .running {
             if let deadline = items[index].deadline, deadline <= current {
                 items[index].phase = .fired
+                items[index].firedAt = current
                 justFired = true
             }
+        }
+
+        // 到点超过 firedLinger 的，直接从清单里删掉（提醒频率不变，只是不一直留着）
+        let settled = items.filter { item in
+            guard item.kind == .timer, item.phase == .fired, let firedAt = item.firedAt else {
+                return false
+            }
+            return current.timeIntervalSince(firedAt) >= Self.firedLinger
+        }.map(\.id)
+        if !settled.isEmpty {
+            items.removeAll { settled.contains($0.id) }
+            alertRounds = 0
+            onStructureChange?()
         }
 
         if justFired {
@@ -173,6 +194,22 @@ final class ReminderStore {
         items.first(where: { $0.id == id })
     }
 
+    /// 已过期（到期日早于今天 00:00）的任务数。
+    var overdueTaskCount: Int {
+        items.filter { isTaskOverdue($0, at: now) }.count
+    }
+
+    /// 今天到期的任务数（不含已过期的）。
+    var todayTaskCount: Int {
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: now)
+        let endOfToday = startOfToday.addingTimeInterval(24 * 3600)
+        return items.filter { item in
+            guard item.kind == .task, let due = item.dueDate else { return false }
+            return due >= startOfToday && due < endOfToday
+        }.count
+    }
+
     func remaining(_ item: ReminderItem) -> TimeInterval {
         guard let deadline = item.deadline else { return 0 }
         return deadline.timeIntervalSince(now)
@@ -186,6 +223,12 @@ final class ReminderStore {
         let left = max(0, remaining(item))
         return min(1, max(0, 1 - left / total))
     }
+}
+
+/// 任务是否已过期：到期日早于参考时刻所在的自然日 00:00。
+func isTaskOverdue(_ item: ReminderItem, at reference: Date = Date()) -> Bool {
+    guard item.kind == .task, let due = item.dueDate else { return false }
+    return due < Calendar.current.startOfDay(for: reference)
 }
 
 /// mm:ss（超过一小时则为 h:mm:ss）。

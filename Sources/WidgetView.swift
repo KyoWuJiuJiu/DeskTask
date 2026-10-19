@@ -158,22 +158,29 @@ final class WidgetView: NSView {
         return minutes <= 0 ? "不到 1 分钟" : "还剩 \(minutes) 分钟"
     }
 
-    /// 横条右侧：优先报过期数量，没有过期时才报今天到期数。
-    private var barTaskText: String {
+    /// 横条右侧的两段文案：过期数是红的，今日数是绿的。
+    private func updateBarInfo() {
         let overdue = store.overdueTaskCount
         let today = store.todayTaskCount
-        if overdue > 0 {
-            return today > 0 ? "过期 \(overdue) 个 · 今日 \(today) 个" : "过期 \(overdue) 个任务"
-        }
-        return today == 0 ? "今日无任务" : "今日 \(today) 个任务"
-    }
 
-    private func updateBarInfo() {
         bar.progress = nearestTimerProgress
         bar.hasTimer = hasRunningTimer
-        bar.hasOverdue = store.overdueTaskCount > 0
         bar.timerText = nearestTimerText
-        bar.taskText = barTaskText
+
+        if overdue > 0 {
+            bar.taskText = "过期 \(overdue) 个"
+            bar.taskTextColor = .systemRed
+            if today > 0 {
+                bar.taskSuffix = " · 今日 \(today) 个"
+                bar.taskSuffixColor = .systemGreen
+            } else {
+                bar.taskSuffix = ""
+            }
+        } else {
+            bar.taskText = today == 0 ? "今日无任务" : "今日 \(today) 个任务"
+            bar.taskTextColor = .systemGreen
+            bar.taskSuffix = ""
+        }
         bar.needsDisplay = true
     }
 

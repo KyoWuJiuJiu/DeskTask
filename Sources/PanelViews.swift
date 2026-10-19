@@ -373,10 +373,13 @@ final class IdleBarView: NSView {
     /// 0…1：最近一个倒计时的进度。
     var progress: Double = 0
     var hasTimer = false
-    /// 有没有已过期的任务（右侧文字标红）。
-    var hasOverdue = false
     var timerText = ""
+    /// 右侧主段（过期数 / 今日数）与其颜色
     var taskText = ""
+    var taskTextColor: NSColor = .labelColor
+    /// 右侧副段（跟在主段后面，例如「· 今日 3 个」）与其颜色
+    var taskSuffix = ""
+    var taskSuffixColor: NSColor = .labelColor
 
     static let barWidth: CGFloat = 296
     static let barHeight: CGFloat = 26
@@ -456,17 +459,23 @@ final class IdleBarView: NSView {
             let size = text.size()
             text.draw(at: NSPoint(x: 13, y: (bounds.height - size.height) / 2))
         }
+        // 右侧从后往前贴：先画副段，再把主段贴在它左边，整体右对齐
+        var rightX = bounds.width - 13
+        if !taskSuffix.isEmpty {
+            var suffixAttributes = attributes
+            suffixAttributes[.foregroundColor] = taskSuffixColor
+            let suffix = NSAttributedString(string: taskSuffix, attributes: suffixAttributes)
+            let size = suffix.size()
+            rightX -= size.width
+            suffix.draw(at: NSPoint(x: rightX, y: (bounds.height - size.height) / 2))
+        }
         if !taskText.isEmpty {
-            var taskAttributes = attributes
-            if hasOverdue {
-                taskAttributes[.foregroundColor] = NSColor.systemRed
-            }
-            let text = NSAttributedString(string: taskText, attributes: taskAttributes)
-            let size = text.size()
-            text.draw(at: NSPoint(
-                x: bounds.width - 13 - size.width,
-                y: (bounds.height - size.height) / 2
-            ))
+            var mainAttributes = attributes
+            mainAttributes[.foregroundColor] = taskTextColor
+            let main = NSAttributedString(string: taskText, attributes: mainAttributes)
+            let size = main.size()
+            rightX -= size.width
+            main.draw(at: NSPoint(x: rightX, y: (bounds.height - size.height) / 2))
         }
     }
 }

@@ -54,6 +54,7 @@ final class WidgetView: NSView {
     private let store: ReminderStore
     private let header = HeaderView()
     private let plusButton = PlusButtonView()
+    private let collapseButton = PillButton(title: "收起")
     private let chooser = ChooserRow()
     private let band = PullBandView()
     private let compose = TaskComposeView()
@@ -83,6 +84,8 @@ final class WidgetView: NSView {
     var onUserActivity: (() -> Void)?
     /// 刚刚新建了一条提醒/任务：可以开始算"用完自动收起"的倒计时了。
     var onItemCreated: (() -> Void)?
+    /// 点了「收起」按钮：请委托方立刻折叠成横条/圆点。
+    var onCollapseRequest: (() -> Void)?
 
     /// 正在拉长或正在填任务 —— 这时候收起会把用户填到一半的东西藏起来。
     var isInputting: Bool {
@@ -100,6 +103,7 @@ final class WidgetView: NSView {
 
         plusButton.onClick = { [weak self] in self?.togglePanel() }
         bar.onClick = { [weak self] in self?.togglePanel() }
+        collapseButton.onClick = { [weak self] in self?.onCollapseRequest?() }
         plusButton.menu = makeMenu()
         chooser.onTimer = { [weak self] in self?.setPanel(.stretching) }
         chooser.onTask = { [weak self] in self?.setPanel(.taskCompose) }
@@ -117,6 +121,7 @@ final class WidgetView: NSView {
         addSubview(band)
         addSubview(compose)
         addSubview(bar)
+        addSubview(collapseButton)
         addSubview(plusButton)
 
         updateVisibility()
@@ -271,6 +276,8 @@ final class WidgetView: NSView {
         // 只有收成横条时才藏起 +/−；面板展开时它必须还在（右上角那个按钮）。
         plusButton.isHidden = (shape == .bar)
         bar.isHidden = (shape != .bar)
+        // 「收起」只在展开状态下出现；已经收成横条/圆点就没有意义了
+        collapseButton.isHidden = idle
         plusButton.expanded = (panelState != .collapsed)
         // 空闲成加号时不画圆底——那块圆形玻璃本身就是按钮。
         plusButton.plain = (shape == .plus)
@@ -397,6 +404,14 @@ final class WidgetView: NSView {
             y: y + (HeaderView.height - Self.plusSizeInline) / 2,
             width: Self.plusSizeInline,
             height: Self.plusSizeInline
+        )
+        let collapseWidth: CGFloat = 46
+        let collapseHeight: CGFloat = 18
+        collapseButton.frame = NSRect(
+            x: bounds.width - padding - Self.plusSizeInline - 6 - collapseWidth,
+            y: y + (HeaderView.height - collapseHeight) / 2,
+            width: collapseWidth,
+            height: collapseHeight
         )
         y += HeaderView.height + 10
 

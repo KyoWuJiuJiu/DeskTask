@@ -71,6 +71,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         widget.onUserActivity = { [weak self] in self?.minimizeArmed = true }
         // 建完一条就自己开始收起倒计时，不必等鼠标移开。
         widget.onItemCreated = { [weak self] in self?.scheduleMinimize(force: true, delay: 2.5) }
+        // 手动折叠：立刻收起，走和自动收起同一条路径
+        widget.onCollapseRequest = { [weak self] in self?.minimizeNow() }
         container.addSubview(widget)
 
         store.onStructureChange = { [weak self] in

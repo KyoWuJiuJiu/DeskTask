@@ -31,6 +31,9 @@ Timer cards show a ring that fills as the countdown runs. When it hits zero the 
 system *Glass* sound, floats the window to the front, and repeats every 30s (up to 5 times) —
 and then **removes the card two minutes later**, so nothing red is left lying around.
 
+A **收起 (collapse)** button in the header folds it back into the strip at any time — the
+collapse is automatic as well, but you do not have to wait for it.
+
 **Overdue tasks stay put.** A task whose due date has passed is kept in the list, marked red as
 overdue instead of silently lingering, and the idle strip switches to reporting how many tasks are
 overdue.

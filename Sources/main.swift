@@ -13,6 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var minimizeTimer: Timer?
     private var keyMonitor: Any?
     private var statusItem: NSStatusItem?
+    /// 上次写进菜单栏的文字，避免每秒重复设置
+    private var lastStatusTitle = ""
     /// 用户真正操作过之后才开启"空闲自动收进桌面"。
     ///
     /// 否则启动瞬间就会误收：启动时窗口要从初始的 328x120 缩成 42x42（左上角不动），
@@ -78,12 +80,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.onStructureChange = { [weak self] in
             guard let self else { return }
             self.widget?.rebuild()
+            self.updateStatusItem()
             // 建完提醒后鼠标一般还在窗口上；一旦移开就进入折叠倒计时。
             if !self.mouseIsInside {
                 self.scheduleMinimize()
             }
         }
-        store.onTick = { [weak self] in self?.widget?.refresh() }
+        store.onTick = { [weak self] in
+            self?.widget?.refresh()
+            self?.updateStatusItem()
+        }
         store.onFire = { [weak self] in self?.alert() }
 
         self.window = window
@@ -250,7 +256,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // 2. 它就是"常驻在刘海旁边"的原生做法 —— 刘海两侧本来就是菜单栏区域。
 
     private func installStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        // 可变宽度：没有倒计时时只有一个图标，有倒计时时会加上「12:34」这样的文字
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = item.button {
             let image = NSImage(systemSymbolName: "timer", accessibilityDescription: "DeskTask")
             image?.isTemplate = true
@@ -260,6 +267,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
         statusItem = item
+        updateStatusItem()
+    }
+
+    /// 把最近一条倒计时的剩余时间显示在菜单栏上，窗口被挡住也能一眼看到。
+    private func updateStatusItem() {
+        guard let button = statusItem?.button else { return }
+
+        var soonest: TimeInterval?
+        for item in store.items where item.kind == .timer && item.phase == .running {
+            let left = store.remaining(item)
+            if soonest == nil || left < soonest! {
+                soonest = left
+            }
+        }
+        let fired = store.items.contains { $0.kind == .timer && $0.phase == .fired }
+
+        let display: String
+        if fired {
+            display = "时间到"
+        } else if let seconds = soonest {
+            display = formatDuration(seconds)
+        } else {
+            display = ""
+        }
+
+        guard display != lastStatusTitle else { return }
+        lastStatusTitle = display
+
+        if display.isEmpty {
+            button.attributedTitle = NSAttributedString(string: "")
+        } else {
+            // 等宽数字，避免秒数跳动时整条菜单栏左右抖
+            button.attributedTitle = NSAttributedString(
+                string: " " + display,
+                attributes: [
+                    .font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium),
+                    .foregroundColor: fired ? NSColor.systemRed : NSColor.labelColor,
+                ]
+            )
+        }
     }
 
     @objc private func statusItemClicked() {

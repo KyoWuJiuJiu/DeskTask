@@ -31,6 +31,10 @@ Timer cards show a ring that fills as the countdown runs. When it hits zero the 
 system *Glass* sound, floats the window to the front, and repeats every 30s (up to 5 times) —
 and then **removes the card two minutes later**, so nothing red is left lying around.
 
+**Hover the notch** to peek at the countdown: a small HUD drops down under it with the remaining
+time and a bar that gets shorter as time runs out. The hover zone is a transparent, click-through
+window 260×40 at the top centre, so it never steals clicks from the menu bar.
+
 While a countdown is running its remaining time is also shown **in the menu bar** next to the
 icon, so the widget being covered by other windows does not hide it.
 

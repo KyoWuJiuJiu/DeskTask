@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     /// 上次写进菜单栏的文字，避免每秒重复设置
     private var lastStatusTitle = ""
+    private var notchHUD: NotchHUDController?
     /// 用户真正操作过之后才开启"空闲自动收进桌面"。
     ///
     /// 否则启动瞬间就会误收：启动时窗口要从初始的 328x120 缩成 42x42（左上角不动），
@@ -80,7 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.onStructureChange = { [weak self] in
             guard let self else { return }
             self.widget?.rebuild()
-            self.updateStatusItem()
+            self.updateCountdownIndicators()
             // 建完提醒后鼠标一般还在窗口上；一旦移开就进入折叠倒计时。
             if !self.mouseIsInside {
                 self.scheduleMinimize()
@@ -88,7 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         store.onTick = { [weak self] in
             self?.widget?.refresh()
-            self?.updateStatusItem()
+            self?.updateCountdownIndicators()
         }
         store.onFire = { [weak self] in self?.alert() }
 
@@ -98,6 +99,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         widget.rebuild()
         installKeyMonitor()
         installStatusItem()
+
+        // 刘海 HUD：悬停刘海时弹出倒计时；弹出期间让桌面上的空闲部件先让位
+        let hud = NotchHUDController()
+        hud.onHUDVisibilityChange = { [weak self] visible in
+            guard let self, let window = self.window, self.isMinimized else { return }
+            if visible {
+                window.orderOut(nil)
+            } else {
+                window.orderFrontRegardless()
+            }
+        }
+        notchHUD = hud
         positionWindow()
 
         // 换屏幕/分辨率变化时重新贴合"刘海正下方、屏幕水平居中"。
@@ -267,18 +280,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
         statusItem = item
-        updateStatusItem()
+        updateCountdownIndicators()
     }
 
-    /// 把最近一条倒计时的剩余时间显示在菜单栏上，窗口被挡住也能一眼看到。
-    private func updateStatusItem() {
-        guard let button = statusItem?.button else { return }
-
+    /// 把最近一条倒计时的剩余时间同时同步到菜单栏和刘海 HUD。
+    private func updateCountdownIndicators() {
         var soonest: TimeInterval?
+        var total: TimeInterval = 0
         for item in store.items where item.kind == .timer && item.phase == .running {
             let left = store.remaining(item)
             if soonest == nil || left < soonest! {
                 soonest = left
+                total = TimeInterval(max(1, item.minutes) * 60)
             }
         }
         let fired = store.items.contains { $0.kind == .timer && $0.phase == .fired }
@@ -292,20 +305,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             display = ""
         }
 
-        guard display != lastStatusTitle else { return }
-        lastStatusTitle = display
+        // 菜单栏
+        if let button = statusItem?.button, display != lastStatusTitle {
+            lastStatusTitle = display
+            if display.isEmpty {
+                button.attributedTitle = NSAttributedString(string: "")
+            } else {
+                button.attributedTitle = NSAttributedString(
+                    string: " " + display,
+                    attributes: [
+                        .font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium),
+                        .foregroundColor: fired ? NSColor.systemRed : NSColor.labelColor,
+                    ]
+                )
+            }
+        }
 
-        if display.isEmpty {
-            button.attributedTitle = NSAttributedString(string: "")
-        } else {
-            // 等宽数字，避免秒数跳动时整条菜单栏左右抖
-            button.attributedTitle = NSAttributedString(
-                string: " " + display,
-                attributes: [
-                    .font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium),
-                    .foregroundColor: fired ? NSColor.systemRed : NSColor.labelColor,
-                ]
+        // 刘海 HUD：进度条按"剩余比例"走，时间越少越短
+        if let remaining = soonest {
+            let fraction = total > 0 ? max(0, min(1, remaining / total)) : 0
+            notchHUD?.update(
+                remainingText: formatDuration(remaining),
+                remainingFraction: fraction,
+                hasTimer: true
             )
+        } else if fired {
+            notchHUD?.update(remainingText: "时间到", remainingFraction: 0, hasTimer: true)
+        } else {
+            notchHUD?.update(remainingText: "", remainingFraction: 0, hasTimer: false)
         }
     }
 
